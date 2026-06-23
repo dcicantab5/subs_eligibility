@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator Kelayakan Subkepakaran — MYPPSM Ceraian SR 5.1.8</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --teal:     #1D9E75;
+  --teal-lt:  #E1F5EE;
+  --teal-md:  #9FE1CB;
+  --teal-dk:  #085041;
+  --red:      #D63B3B;
+  --red-lt:   #FCEBEB;
+  --red-md:   #F09595;
+  --red-dk:   #791F1F;
+  --amber:    #B06E0F;
+  --amber-lt: #FEF3E2;
+  --amber-md: #FAC775;
+  --amber-dk: #633806;
+  --blue:     #1A5FA5;
+  --blue-lt:  #EAF2FB;
+  --blue-md:  #B5D4F4;
+  --gray-50:  #FAFAF8;
+  --gray-100: #F2F0EA;
+  --gray-200: #E0DDD5;
+  --gray-400: #A09E97;
+  --gray-600: #5C5A56;
+  --gray-900: #1E1D1B;
+  --border:   1px solid var(--gray-200);
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--gray-100);
+  color: var(--gray-900);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ── Header ── */
+.hdr {
+  background: #fff;
+  border-bottom: var(--border);
+  padding: 0 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.hdr-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: .75rem 0;
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+}
+.hdr-pill {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--teal);
+  background: var(--teal-lt);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--teal-md);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.hdr-title { font-size: 15px; font-weight: 600; color: var(--gray-900); }
+.hdr-sub   { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+
+/* ── Main layout ── */
+.main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.25rem;
+  align-items: start;
+}
+@media (max-width: 740px) {
+  .main { grid-template-columns: 1fr; padding: 1rem; }
+}
+
+/* ── Cards ── */
+.card {
+  background: #fff;
+  border: var(--border);
+  border-radius: var(--r-lg);
+  padding: 1.25rem;
+  margin-bottom: .875rem;
+}
+.card:last-child { margin-bottom: 0; }
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: .875rem;
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+.card-ref {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--gray-400);
+  letter-spacing: .01em;
+}
+
+/* ── Info bar ── */
+.info-bar {
+  background: var(--blue-lt);
+  border: 1px solid var(--blue-md);
+  border-radius: var(--r-md);
+  padding: .625rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: .625rem;
+  margin-bottom: .875rem;
+}
+.info-bar-ico { color: var(--blue); font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.info-bar p   { font-size: 11px; color: var(--blue); line-height: 1.5; }
+.info-bar strong { font-weight: 600; }
+
+/* ── Fields ── */
+.field { margin-bottom: .75rem; }
+.field:last-child { margin-bottom: 0; }
+
+.field > label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gray-600);
+  margin-bottom: 5px;
+}
+.field input[type=date],
+.field input[type=number] {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  border: var(--border);
+  border-radius: var(--r-sm);
+  color: var(--gray-900);
+  background: #fff;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(29,158,117,.12);
+}
+.helper {
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* ── Segmented control ── */
+.seg-ctrl {
+  display: flex;
+  border: var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.seg-btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-400);
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+  transition: all .15s;
+  border-right: var(--border);
+}
+.seg-btn:last-child { border-right: none; }
+.seg-btn.active { background: var(--teal); color: #fff; }
+.seg-btn small { display: block; font-size: 10px; font-weight: 400; opacity: .8; margin-top: 2px; }
+
+/* ── Derived info row ── */
+.derived {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--gray-50);
+  border: var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--gray-600);
+  flex-wrap: wrap;
+}
+.derived strong { color: var(--gray-900); }
+.derived-right { margin-left: auto; }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--gray-100); margin: .75rem 0; }
+
+/* ── LNPT year rows ── */
+.lnpt-year { padding: .625rem 0; }
+
+.lnpt-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+.year-label { font-size: 14px; font-weight: 700; color: var(--gray-900); }
+.year-sub   { font-size: 11px; font-weight: 400; color: var(--gray-400); margin-left: 6px; }
+
+.tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; letter-spacing: .03em; }
+.tag-assess    { background: var(--teal-lt); color: var(--teal); border: 1px solid var(--teal-md); }
+.tag-ineligible{ background: var(--red-lt);  color: var(--red);  border: 1px solid var(--red-md); }
+
+.score-track { display: flex; align-items: center; gap: 10px; }
+.score-track input[type=range] {
+  flex: 1;
+  accent-color: var(--teal);
+  height: 4px;
+  cursor: pointer;
+}
+.score-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  min-width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.pill-ok   { background: var(--teal-lt); color: var(--teal); border: 1px solid var(--teal-md); }
+.pill-fail { background: var(--red-lt);  color: var(--red);  border: 1px solid var(--red-md);  }
+.pill-warn { background: var(--amber-lt);color: var(--amber);border: 1px solid var(--amber-md);}
+.pill-na   { background: var(--gray-100);color: var(--gray-400); border: var(--border); }
+
+.cbbp-row { display: flex; align-items: center; gap: 5px; margin-top: 5px; }
+.cbbp-row input { accent-color: var(--amber); cursor: pointer; width: 13px; height: 13px; }
+.cbbp-row label { font-size: 11px; color: var(--gray-400); cursor: pointer; }
+
+.ineligible-note {
+  font-size: 11px;
+  color: var(--red);
+  background: var(--red-lt);
+  border: 1px solid var(--red-md);
+  padding: 5px 8px;
+  border-radius: var(--r-sm);
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+.avg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background: var(--gray-50);
+  border: var(--border);
+  border-radius: var(--r-sm);
+  margin-top: .875rem;
+}
+.avg-row span { font-size: 12px; color: var(--gray-600); }
+.avg-right { display: flex; align-items: center; gap: 8px; }
+.avg-right strong { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+
+/* ── Results panel ── */
+.results-panel { position: sticky; top: 58px; }
+
+.results-card {
+  background: #fff;
+  border: var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.results-hdr {
+  padding: .75rem 1.25rem;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.results-hdr p {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+}
+
+/* ── Criteria list ── */
+.criteria-list { padding: .375rem 1.25rem; }
+.crit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: .625rem 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.crit-item:last-child { border-bottom: none; }
+
+.crit-ico {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ico-ok      { background: var(--teal-lt); color: var(--teal); border: 1px solid var(--teal-md); }
+.ico-fail    { background: var(--red-lt);  color: var(--red);  border: 1px solid var(--red-md);  }
+.ico-warn    { background: var(--amber-lt);color: var(--amber);border: 1px solid var(--amber-md);}
+.ico-pending { background: var(--gray-100);color: var(--gray-400); border: var(--border); }
+
+.crit-body   { flex: 1; min-width: 0; }
+.crit-name   { font-size: 12px; font-weight: 600; color: var(--gray-900); }
+.crit-detail { font-size: 11px; color: var(--gray-400); line-height: 1.4; margin-top: 2px; }
+
+.crit-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 20px;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.badge-ok      { background: var(--teal-lt); color: var(--teal); }
+.badge-fail    { background: var(--red-lt);  color: var(--red);  }
+.badge-warn    { background: var(--amber-lt);color: var(--amber);}
+.badge-pending { background: var(--gray-100);color: var(--gray-400); }
+
+/* ── Verdict ── */
+.verdict-wrap { padding: .875rem 1.25rem; }
+.verdict-box  { border-radius: var(--r-md); padding: 1rem; }
+.v-eligible   { background: var(--teal-lt); border: 1px solid var(--teal-md); }
+.v-ineligible { background: var(--red-lt);  border: 1px solid var(--red-md);  }
+.v-warn       { background: var(--amber-lt);border: 1px solid var(--amber-md);}
+.v-pending    { background: var(--gray-50); border: var(--border); }
+
+.v-lbl  { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 3px; }
+.v-main { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.v-detail { font-size: 11px; line-height: 1.5; }
+
+.v-eligible .v-lbl   { color: var(--teal); }
+.v-eligible .v-main  { color: var(--teal-dk); }
+.v-eligible .v-detail{ color: var(--teal); }
+
+.v-ineligible .v-lbl   { color: var(--red); }
+.v-ineligible .v-main  { color: var(--red-dk); }
+.v-ineligible .v-detail{ color: var(--red); }
+
+.v-warn .v-lbl   { color: var(--amber); }
+.v-warn .v-main  { color: var(--amber-dk); }
+.v-warn .v-detail{ color: var(--amber); }
+
+.v-pending .v-lbl   { color: var(--gray-400); }
+.v-pending .v-main  { color: var(--gray-600); }
+.v-pending .v-detail{ color: var(--gray-400); }
+
+.training-note {
+  margin-top: .625rem;
+  padding: .5rem .75rem;
+  background: var(--gray-50);
+  border: var(--border);
+  border-radius: var(--r-sm);
+  font-size: 11px;
+  color: var(--gray-400);
+  line-height: 1.5;
+}
+.training-note strong { color: var(--gray-600); }
+
+.copy-btn {
+  width: 100%;
+  margin-top: .75rem;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-600);
+  background: #fff;
+  border: var(--border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all .15s;
+}
+.copy-btn:hover  { background: var(--gray-50); border-color: var(--gray-400); }
+.copy-btn.copied { color: var(--teal); background: var(--teal-lt); border-color: var(--teal-md); }
+
+/* ── Empty state ── */
+.empty { text-align: center; padding: 1.5rem 1rem; color: var(--gray-400); }
+.empty-ico { font-size: 22px; opacity: .4; margin-bottom: .5rem; display: block; }
+.empty p { font-size: 12px; line-height: 1.5; }
+
+/* ── Window description ── */
+.window-info {
+  font-size: 11px;
+  color: var(--gray-400);
+  background: var(--gray-50);
+  border: var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+  margin-bottom: .875rem;
+  line-height: 1.5;
+}
+.window-info strong { color: var(--gray-600); }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <span class="hdr-pill">MYPPSM Ceraian SR 5.1.8</span>
+    <div>
+      <div class="hdr-title">Kalkulator Kelayakan Latihan Subkepakaran</div>
+      <div class="hdr-sub">Cuti Belajar &amp; Biasiswa Dalam Perkhidmatan · Kementerian Kesihatan Malaysia</div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ════ FORM COLUMN ════ -->
+  <div>
+
+    <!-- Status reminder -->
+    <div class="info-bar">
+      <span class="info-bar-ico">ⓘ</span>
+      <p><strong>Syarat status perkhidmatan (Para 11(i) &amp; 14(i)):</strong> Pegawai mestilah berkhidmat secara <strong>tetap</strong> sebelum memohon program latihan subkepakaran. Pegawai dalam tempoh kontrak tidak layak.</p>
+    </div>
+
+    <!-- ── Card 1: Training completion ── -->
+    <div class="card">
+      <div class="card-title">
+        Tamat latihan pakar
+        <span class="card-ref">Para 11(viii) &amp; 14(vii) · Tempoh menunggu minimum 3 tahun</span>
+      </div>
+
+      <div class="field">
+        <label>Jenis program latihan pakar</label>
+        <div class="seg-ctrl">
+          <button class="seg-btn active" onclick="setType('senat', this)">
+            Sarjana Perubatan
+            <small>Tarikh Senat</small>
+          </button>
+          <button class="seg-btn" onclick="setType('cct', this)">
+            Parallel Pathway
+            <small>Tarikh CCT</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label id="dateLabel">Tarikh Senat</label>
+        <input type="date" id="completionDate" onchange="calc()">
+        <p class="helper">Tarikh pengesahan kelulusan rasmi. Tempoh menunggu 3 tahun dikira dari tarikh ini.</p>
+      </div>
+
+      <div id="completionInfo" style="display:none;" class="derived">
+        <span>Tahun siap: <strong id="completionYearVal">—</strong></span>
+        <span id="waitMonthsLabel" style="color:var(--gray-400);"></span>
+        <div class="derived-right" id="waitBadge"></div>
+      </div>
+    </div>
+
+    <!-- ── Card 2: Application year ── -->
+    <div class="card">
+      <div class="card-title">Tahun permohonan subkepakaran</div>
+      <div class="field">
+        <label>Tahun intake / permohonan</label>
+        <input type="number" id="appYear" value="2026" min="2000" max="2060"
+               onchange="calc()" oninput="calc()" style="max-width:140px;">
+        <p class="helper">
+          Tahun pegawai ini merancang untuk memohon atau memasuki latihan subkepakaran.
+          Tetingkap LNPT dikira berdasarkan tahun ini: tahun-tahun <em>selepas</em> tahun tamat latihan pakar dan <em>sebelum</em> tahun permohonan.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Card 3: LNPT ── -->
+    <div class="card">
+      <div class="card-title">
+        LNPT 3 tahun terkini berturut-turut
+        <span class="card-ref">Min. purata 85% setiap tahun · Para 11(iv) &amp; 14(iv)</span>
+      </div>
+
+      <div class="window-info" id="windowInfo">
+        Masukkan tarikh tamat latihan pakar untuk melihat tahun-tahun LNPT yang layak dinilai.
+      </div>
+
+      <div id="lnptContainer">
+        <div class="empty">
+          <span class="empty-ico">📅</span>
+          <p>Tahun penilaian akan dipaparkan<br>selepas tarikh tamat latihan dimasukkan.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════ RESULTS COLUMN ════ -->
+  <div class="results-panel">
+    <div class="results-card">
+      <div class="results-hdr">
+        <p>Keputusan semakan</p>
+      </div>
+
+      <div class="criteria-list" id="criteriaList">
+        <div class="empty" style="padding:1.25rem 0;">
+          <p>Isi maklumat di sebelah<br>untuk semak kelayakan.</p>
+        </div>
+      </div>
+
+      <div class="verdict-wrap">
+        <div class="verdict-box v-pending" id="verdictBox">
+          <p class="v-lbl">Keputusan</p>
+          <p class="v-main" id="vMain">Menunggu maklumat</p>
+          <p class="v-detail" id="vDetail">Masukkan tarikh tamat latihan untuk mula.</p>
+        </div>
+        <div id="trainingNote" style="display:none;" class="training-note"></div>
+        <button class="copy-btn" onclick="copyResult()" id="copyBtn">
+          📋 Salin ringkasan keputusan
+        </button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+var st = {
+  type: 'senat',
+  completionDate: '',
+  appYear: 2026,
+  scores: {},
+  cbbp: {}
+};
+
+/* ── Type toggle ── */
+function setType(val, btn) {
+  st.type = val;
+  document.querySelectorAll('.seg-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('dateLabel').textContent =
+    val === 'senat' ? 'Tarikh Senat' : 'Tarikh CCT (Certificate of Completion of Training)';
+  calc();
+}
+
+/* ── Score update (live from slider) ── */
+function setScore(year, val) {
+  st.scores[year] = parseInt(val);
+  var pill = document.getElementById('pill-' + year);
+  if (pill) {
+    pill.textContent = val + '%';
+    pill.className = 'score-pill ' + (parseInt(val) >= 85 ? 'pill-ok' : 'pill-fail');
+  }
+  updateAvgRow();
+  updateResultsPanel();
+}
+
+function setCbbp(year, checked) {
+  st.cbbp[year] = checked;
+  updateResultsPanel();
+}
+
+/* ── Date helpers ── */
+function monthsBetween(d1str, d2str) {
+  var a = new Date(d1str), b = new Date(d2str);
+  var m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if (b.getDate() < a.getDate()) m--;
+  return Math.max(0, m);
+}
+
+function fmtMonths(m) {
+  var y = Math.floor(m / 12), mo = m % 12;
+  if (y === 0) return mo + ' bulan';
+  if (mo === 0) return y + ' tahun';
+  return y + ' tahun ' + mo + ' bulan';
+}
+
+function addMonths(dateStr, months) {
+  var d = new Date(dateStr);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('ms-MY', { year: 'numeric', month: 'long' });
+}
+
+/* ── Assessment years ── */
+function getAssessYears() {
+  return [st.appYear - 3, st.appYear - 2, st.appYear - 1];
+}
+
+function getCompletionYear() {
+  return st.completionDate ? new Date(st.completionDate).getFullYear() : null;
+}
+
+/* ── Main calc: runs on date / appYear change ── */
+function calc() {
+  st.completionDate = document.getElementById('completionDate').value;
+  st.appYear = parseInt(document.getElementById('appYear').value) || 2026;
+
+  if (!st.completionDate) { reset(); return; }
+
+  var completionYear = getCompletionYear();
+  var today = new Date().toISOString().slice(0, 10);
+  var months = monthsBetween(st.completionDate, today);
+  var waitOk = months >= 36;
+  var remaining = 36 - months;
+
+  /* Update completion info row */
+  document.getElementById('completionYearVal').textContent = completionYear;
+  document.getElementById('waitMonthsLabel').textContent = fmtMonths(months) + ' yang lalu';
+  document.getElementById('waitBadge').innerHTML = waitOk
+    ? '<span class="score-pill pill-ok">&ge; 3 tahun &#10003;</span>'
+    : '<span class="score-pill pill-fail">Kurang ' + fmtMonths(remaining) + '</span>';
+  document.getElementById('completionInfo').style.display = 'flex';
+
+  /* Window info */
+  var assessYears = getAssessYears();
+  var eligibleYears = assessYears.filter(function(y) { return y > completionYear; });
+  var windowStr;
+  if (eligibleYears.length === 3) {
+    windowStr = '<strong>Tetingkap layak:</strong> ' + assessYears[0] + '–' + assessYears[2] +
+      ' (selepas tahun ' + completionYear + ', sebelum tahun permohonan ' + st.appYear + ').';
+  } else if (eligibleYears.length === 0) {
+    windowStr = '<strong>Tiada tahun layak</strong> — kesemua tahun penilaian masih dalam tempoh latihan pakar (' + completionYear + ').';
+  } else {
+    windowStr = '<strong>Hanya ' + eligibleYears.length + ' daripada 3</strong> tahun penilaian layak (mesti &gt; tahun ' + completionYear + ').';
+  }
+  document.getElementById('windowInfo').innerHTML = windowStr;
+
+  /* Render LNPT inputs */
+  renderLnpt(assessYears, completionYear);
+  updateAvgRow();
+  updateResultsPanel();
+}
+
+/* ── Render LNPT year inputs ── */
+function renderLnpt(assessYears, completionYear) {
+  var orderLabels = ['Tahun ke-3 (paling awal)', 'Tahun ke-2', 'Tahun ke-1 (terkini)'];
+  var html = '';
+
+  for (var i = 0; i < assessYears.length; i++) {
+    var year = assessYears[i];
+    var eligible = year > completionYear;
+    var label = orderLabels[i];
+
+    if (i > 0) html += '<div class="divider"></div>';
+
+    if (!eligible) {
+      html += '<div class="lnpt-year">' +
+        '<div class="lnpt-hdr">' +
+          '<span class="year-label">' + year + '<span class="year-sub">' + label + '</span></span>' +
+          '<span class="tag tag-ineligible">Dalam latihan pakar</span>' +
+        '</div>' +
+        '<div class="ineligible-note">Tahun ' + year + ' tidak melebihi tahun tamat latihan pakar (' + completionYear + '). Tahun ini tidak boleh dikira sebagai LNPT selepas latihan.</div>' +
+      '</div>';
+      continue;
+    }
+
+    /* Initialise default score if first time seeing this year */
+    if (st.scores[year] === undefined) st.scores[year] = 88;
+    var score = st.scores[year];
+    var cbbp  = st.cbbp[year] || false;
+    var pCls  = score >= 85 ? 'pill-ok' : 'pill-fail';
+
+    html += '<div class="lnpt-year">' +
+      '<div class="lnpt-hdr">' +
+        '<span class="year-label">' + year + '<span class="year-sub">' + label + '</span></span>' +
+        '<span class="tag tag-assess">Tahun penilaian</span>' +
+      '</div>' +
+      '<div class="score-track">' +
+        '<input type="range" min="50" max="100" step="1" value="' + score + '" ' +
+               'oninput="setScore(' + year + ', this.value)">' +
+        '<span id="pill-' + year + '" class="score-pill ' + pCls + '">' + score + '%</span>' +
+      '</div>' +
+      '<div class="cbbp-row">' +
+        '<input type="checkbox" id="cbbp-' + year + '"' + (cbbp ? ' checked' : '') +
+               ' onchange="setCbbp(' + year + ', this.checked)">' +
+        '<label for="cbbp-' + year + '">LNPT tahun ini dinilai semasa dalam CBBP</label>' +
+      '</div>' +
+    '</div>';
+  }
+
+  document.getElementById('lnptContainer').innerHTML = html || '<div class="empty"><p>Tiada tahun layak untuk ditunjukkan.</p></div>';
+}
+
+/* ── Update average row (called after each score change) ── */
+function updateAvgRow() {
+  var completionYear = getCompletionYear();
+  if (!completionYear) return;
+  var assessYears = getAssessYears();
+  var allEligible = assessYears.every(function(y) { return y > completionYear; });
+  if (!allEligible) { removeAvgRow(); return; }
+
+  var sc  = assessYears.map(function(y) { return st.scores[y] !== undefined ? st.scores[y] : 88; });
+  var avg = (sc[0] + sc[1] + sc[2]) / 3;
+  var ok  = avg >= 85;
+
+  /* Find or create avg row */
+  var existing = document.getElementById('avgRowEl');
+  if (!existing) {
+    var row = document.createElement('div');
+    row.id = 'avgRowEl';
+    row.className = 'avg-row';
+    row.innerHTML =
+      '<span>Purata 3 tahun penilaian</span>' +
+      '<div class="avg-right">' +
+        '<strong id="avgVal"></strong>' +
+        '<span id="avgPill" class="score-pill"></span>' +
+      '</div>';
+    document.getElementById('lnptContainer').appendChild(row);
+  }
+  document.getElementById('avgVal').textContent = avg.toFixed(1) + '%';
+  var avgPill = document.getElementById('avgPill');
+  avgPill.textContent = ok ? '≥ 85% ✓' : '< 85% ✗';
+  avgPill.className   = 'score-pill ' + (ok ? 'pill-ok' : 'pill-fail');
+}
+
+function removeAvgRow() {
+  var el = document.getElementById('avgRowEl');
+  if (el) el.remove();
+}
+
+/* ── Update results panel (called on any change) ── */
+function updateResultsPanel() {
+  if (!st.completionDate) return;
+
+  var completionYear = getCompletionYear();
+  var today    = new Date().toISOString().slice(0, 10);
+  var months   = monthsBetween(st.completionDate, today);
+  var waitOk   = months >= 36;
+  var remaining = 36 - months;
+  var typeLabel = st.type === 'senat' ? 'Senat' : 'CCT';
+
+  var assessYears  = getAssessYears();
+  var eligibleCount = assessYears.filter(function(y) { return y > completionYear; }).length;
+  var allEligible   = eligibleCount === 3;
+
+  /* ── Criterion 1: Tempoh menunggu ── */
+  var waitDetail;
+  if (waitOk) {
+    waitDetail = fmtMonths(months) + ' sejak tarikh ' + typeLabel + ' — memenuhi syarat.';
+  } else {
+    var eligible_from = fmtDate(addMonths(st.completionDate, 36));
+    waitDetail = 'Baru ' + fmtMonths(months) + '. Perlu lagi ' + fmtMonths(remaining) +
+                 '. Layak sekitar ' + eligible_from + '.';
+  }
+
+  /* ── Criterion 2: LNPT ── */
+  var lnptStatus, lnptDetail, lnptBadge;
+
+  if (!allEligible) {
+    var lacking = 3 - eligibleCount;
+    var firstApp = completionYear + 4;
+    lnptStatus = 'fail';
+    lnptBadge  = 'GAGAL';
+    lnptDetail = lacking + ' daripada 3 tahun penilaian masih ≤ tahun tamat latihan (' + completionYear + '). ' +
+                 'Tahun permohonan terawal dengan 3 tahun LNPT layak: ' + firstApp + '.';
+  } else {
+    var sc  = assessYears.map(function(y) { return st.scores[y] !== undefined ? st.scores[y] : 88; });
+    var avg = (sc[0] + sc[1] + sc[2]) / 3;
+    var eachOk  = sc.every(function(s) { return s >= 85; });
+    var avgOk   = avg >= 85;
+    var hasCbbp = assessYears.some(function(y) { return st.cbbp[y]; });
+
+    if (eachOk && avgOk && !hasCbbp) {
+      lnptStatus = 'ok';   lnptBadge = 'LULUS';
+      lnptDetail = 'Purata ' + avg.toFixed(1) + '% — memenuhi syarat min. 85% bagi 3 tahun berturut-turut.';
+    } else if (eachOk && avgOk && hasCbbp) {
+      lnptStatus = 'warn'; lnptBadge = 'SEMAK';
+      lnptDetail = 'Purata ' + avg.toFixed(1) + '%. Terdapat tahun LNPT semasa CBBP — perlu disahkan dengan BPL & BPP bahawa tahun tersebut boleh dikira.';
+    } else if (!eachOk) {
+      var failYrs = assessYears.filter(function(y, i) { return sc[i] < 85; }).join(', ');
+      lnptStatus = 'fail'; lnptBadge = 'GAGAL';
+      lnptDetail = 'Markah < 85% pada tahun: ' + failYrs + '. Purata: ' + avg.toFixed(1) + '%.';
+    } else {
+      lnptStatus = 'fail'; lnptBadge = 'GAGAL';
+      lnptDetail = 'Purata ' + avg.toFixed(1) + '% — di bawah syarat minimum 85%.';
+    }
+  }
+
+  var criteria = [
+    {
+      name:   'Tempoh menunggu ≥ 3 tahun (dari ' + typeLabel + ')',
+      detail: waitDetail,
+      status: waitOk ? 'ok' : 'fail',
+      badge:  waitOk ? 'LULUS' : 'GAGAL'
+    },
+    {
+      name:   'LNPT 3 tahun terkini (min. 85% setiap tahun)',
+      detail: lnptDetail,
+      status: lnptStatus,
+      badge:  lnptBadge
+    }
+  ];
+
+  /* Render criteria list */
+  var icoMap = { ok: '&#10003;', fail: '&#10007;', warn: '!', pending: '&middot;' };
+  var icoClass = { ok: 'ico-ok', fail: 'ico-fail', warn: 'ico-warn', pending: 'ico-pending' };
+  var bdgClass = { ok: 'badge-ok', fail: 'badge-fail', warn: 'badge-warn', pending: 'badge-pending' };
+
+  document.getElementById('criteriaList').innerHTML = criteria.map(function(c) {
+    return '<div class="crit-item">' +
+      '<div class="crit-ico ' + icoClass[c.status] + '">' + icoMap[c.status] + '</div>' +
+      '<div class="crit-body">' +
+        '<div class="crit-name">' + c.name + '</div>' +
+        '<div class="crit-detail">' + c.detail + '</div>' +
+      '</div>' +
+      '<span class="crit-badge ' + bdgClass[c.status] + '">' + c.badge + '</span>' +
+    '</div>';
+  }).join('');
+
+  /* Verdict */
+  var anyFail = criteria.some(function(c) { return c.status === 'fail'; });
+  var anyWarn = criteria.some(function(c) { return c.status === 'warn'; });
+  var allOk   = criteria.every(function(c) { return c.status === 'ok'; });
+  var box     = document.getElementById('verdictBox');
+  var note    = document.getElementById('trainingNote');
+
+  if (anyFail) {
+    box.className = 'verdict-box v-ineligible';
+    document.getElementById('vMain').textContent   = 'Tidak Layak';
+    document.getElementById('vDetail').textContent =
+      'Gagal: ' + criteria.filter(function(c) { return c.status === 'fail'; })
+        .map(function(c) { return c.name; }).join('; ') + '.';
+    note.style.display = 'none';
+  } else if (anyWarn) {
+    box.className = 'verdict-box v-warn';
+    document.getElementById('vMain').textContent   = 'Perlu Semakan Lanjut';
+    document.getElementById('vDetail').textContent =
+      'Secara teknikal memenuhi syarat, namun isu LNPT semasa CBBP perlu disahkan dengan BPL & BPP sebelum permohonan diteruskan.';
+    note.style.display = 'block';
+  } else if (allOk) {
+    box.className = 'verdict-box v-eligible';
+    document.getElementById('vMain').textContent   = 'Layak';
+    document.getElementById('vDetail').textContent =
+      'Memenuhi semua syarat di bawah MYPPSM Ceraian SR 5.1.8. Boleh diteruskan dengan permohonan latihan subkepakaran.';
+    note.style.display = 'block';
+  } else {
+    box.className = 'verdict-box v-pending';
+    document.getElementById('vMain').textContent   = 'Sedang dikira';
+    document.getElementById('vDetail').textContent = '';
+    note.style.display = 'none';
+  }
+}
+
+/* ── Copy result to clipboard ── */
+function copyResult() {
+  var vMain   = document.getElementById('vMain').textContent;
+  var vDetail = document.getElementById('vDetail').textContent;
+  var items   = document.querySelectorAll('.crit-item');
+  var lines   = [];
+  items.forEach(function(el) {
+    var name   = el.querySelector('.crit-name').textContent;
+    var badge  = el.querySelector('.crit-badge').textContent;
+    var detail = el.querySelector('.crit-detail').textContent;
+    lines.push('• ' + name + ' [' + badge + ']: ' + detail);
+  });
+
+  var typeLabel = st.type === 'senat' ? 'Sarjana Perubatan (Tarikh Senat)' : 'Parallel Pathway (Tarikh CCT)';
+  var date = new Date().toLocaleDateString('ms-MY');
+  var txt = [
+    'SEMAKAN KELAYAKAN LATIHAN SUBKEPAKARAN',
+    'MYPPSM Ceraian SR 5.1.8 · Kementerian Kesihatan Malaysia',
+    'Tarikh semakan: ' + date,
+    '',
+    'Jenis program: ' + typeLabel,
+    'Tahun permohonan: ' + st.appYear,
+    'Keputusan: ' + vMain,
+    vDetail,
+    '',
+    'Ringkasan kriteria:',
+    lines.join('\n')
+  ].join('\n');
+
+  var btn = document.getElementById('copyBtn');
+  function onDone() {
+    btn.textContent = '✓ Disalin ke papan klip';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.innerHTML = '📋 Salin ringkasan keputusan';
+      btn.classList.remove('copied');
+    }, 2200);
+  }
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(onDone).catch(fallback);
+  } else { fallback(); }
+
+  function fallback() {
+    var ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); onDone(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+}
+
+/* ── Reset UI ── */
+function reset() {
+  document.getElementById('completionInfo').style.display = 'none';
+  document.getElementById('windowInfo').textContent =
+    'Masukkan tarikh tamat latihan pakar untuk melihat tahun-tahun LNPT yang layak dinilai.';
+  document.getElementById('lnptContainer').innerHTML =
+    '<div class="empty"><span class="empty-ico">📅</span>' +
+    '<p>Tahun penilaian akan dipaparkan<br>selepas tarikh tamat latihan dimasukkan.</p></div>';
+  document.getElementById('criteriaList').innerHTML =
+    '<div class="empty" style="padding:1.25rem 0;"><p>Isi maklumat di sebelah<br>untuk semak kelayakan.</p></div>';
+  document.getElementById('verdictBox').className = 'verdict-box v-pending';
+  document.getElementById('vMain').textContent    = 'Menunggu maklumat';
+  document.getElementById('vDetail').textContent  = 'Masukkan tarikh tamat latihan untuk mula.';
+  document.getElementById('trainingNote').style.display = 'none';
+}
+</script>
+</body>
+</html>
